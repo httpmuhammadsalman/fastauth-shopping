@@ -21,6 +21,8 @@ export default function CartPage() {
 
   const closeCheckout = useCallback(() => setCheckout(null), []);
 
+  const handlePaymentError = useCallback((message: string) => setError(message), []);
+
   const handlePaymentSuccess = useCallback(
     (result: PaymentResult) => {
       setCheckout(null);
@@ -216,6 +218,7 @@ export default function CartPage() {
           checkoutUrl={checkout.checkoutUrl}
           onClose={closeCheckout}
           onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
         />
       )}
     </>

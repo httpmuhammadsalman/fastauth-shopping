@@ -14,6 +14,7 @@ type Props = {
   cartId: string;
   onClose: () => void;
   onSuccess: (result: PaymentResult) => void;
+  onError: (message: string) => void;
 };
 
 // Checkout posts { status, message, data } where data is a JSON string
@@ -31,7 +32,7 @@ const parsePaymentResult = (event: { message?: string; data?: unknown }): Paymen
   };
 };
 
-export default function CheckoutModal({ checkoutUrl, cartId, onClose, onSuccess }: Props) {
+export default function CheckoutModal({ checkoutUrl, cartId, onClose, onSuccess, onError }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,6 +49,12 @@ export default function CheckoutModal({ checkoutUrl, cartId, onClose, onSuccess 
       console.log("[FastAuth checkout]", e.data);
 
       if (e.data?.status === "success") onSuccess(parsePaymentResult(e.data));
+
+      // Only sent when the API answers 200 with success:false. A declined card
+      // usually throws inside the checkout and posts nothing, so never rely on this.
+      if (e.data?.status === "error") {
+        onError(e.data?.message || "Payment failed. Please try another card.");
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -57,7 +64,7 @@ export default function CheckoutModal({ checkoutUrl, cartId, onClose, onSuccess 
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("message", onMessage);
     };
-  }, [checkoutUrl, onClose, onSuccess]);
+  }, [checkoutUrl, onClose, onSuccess, onError]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-6">
