@@ -2,33 +2,61 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import CheckoutModal from "@/components/CheckoutModal";
+import { useCallback, useRef, useState } from "react";
+import CheckoutModal, { type PaymentResult } from "@/components/CheckoutModal";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
 
 type Checkout = { cartId: string; checkoutUrl: string };
 
 export default function CartPage() {
-  const { items, count, subtotal, setQty, removeItem, clear } = useCart();
+  const { items, count, subtotal, setQty, removeItem, clear, remoteCartId, setRemoteCartId } = useCart();
+  const lastSynced = useRef<{ signature: string; checkout: Checkout } | null>(null);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [paid, setPaid] = useState<PaymentResult | null>(null);
+
   const closeCheckout = useCallback(() => setCheckout(null), []);
 
+  const handlePaymentSuccess = useCallback(
+    (result: PaymentResult) => {
+      setCheckout(null);
+      clear();
+      // Paid cart is finished, next order creates a new one
+      setRemoteCartId(null);
+      lastSynced.current = null;
+      setPaid(result);
+    },
+    [clear, setRemoteCartId]
+  );
+
   const handleCheckout = async () => {
+    const lines = items.map((item) => ({ id: item.product.id, qty: item.qty }));
+    const signature = JSON.stringify(lines);
+
+    // Nothing changed since the last sync, just reopen the checkout
+    if (lastSynced.current?.signature === signature) {
+      setCheckout(lastSynced.current.checkout);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
-    try {
-      const res = await fetch("/api/cart", {
+    const send = (url: string) =>
+      fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({ id: item.product.id, qty: item.qty })),
-        }),
+        body: JSON.stringify({ items: lines }),
       });
+
+    try {
+      // Update the existing FastAuth cart, create one if there is none (or it no longer exists)
+      let res = remoteCartId ? await send(`/api/cart/${remoteCartId}`) : await send("/api/cart");
+      // FastAuth answers 400 (not 404) for an unknown cart
+      if (remoteCartId && [400, 404].includes(res.status)) res = await send("/api/cart");
       const json = await res.json();
 
       if (!res.ok || !json.success) {
@@ -36,13 +64,50 @@ export default function CartPage() {
         return;
       }
 
-      setCheckout({ cartId: json.cartId, checkoutUrl: json.checkoutUrl });
+      const nextCheckout = { cartId: json.cartId, checkoutUrl: json.checkoutUrl };
+      lastSynced.current = { signature, checkout: nextCheckout };
+      setRemoteCartId(json.cartId);
+      setCheckout(nextCheckout);
     } catch {
       setError("Network error, please try again");
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (paid) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">
+          &#10003;
+        </div>
+        <h1 className="text-2xl font-bold">{paid.message}</h1>
+        <dl className="space-y-1 text-sm text-zinc-500">
+          {paid.amount != null && (
+            <div>
+              Amount paid: <span className="font-semibold text-zinc-900">{formatPrice(paid.amount)}</span>
+            </div>
+          )}
+          {paid.invoiceNo && (
+            <div>
+              Invoice: <span className="font-mono text-zinc-900">{paid.invoiceNo}</span>
+            </div>
+          )}
+          {paid.trxId && (
+            <div>
+              Transaction: <span className="font-mono text-zinc-900">{paid.trxId}</span>
+            </div>
+          )}
+        </dl>
+        <Link
+          href="/"
+          className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-600"
+        >
+          Continue shopping
+        </Link>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -157,6 +222,7 @@ export default function CartPage() {
           cartId={checkout.cartId}
           checkoutUrl={checkout.checkoutUrl}
           onClose={closeCheckout}
+          onSuccess={handlePaymentSuccess}
         />
       )}
     </>

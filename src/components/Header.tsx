@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { site } from "@/config/site";
 import { useCart } from "@/lib/cart-context";
 
 export default function Header() {
@@ -9,8 +11,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          FastAuth<span className="text-indigo-600">Shop</span>
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/logo-black.png" alt={site.name} width={130} height={35} priority />
+          <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+            Shop
+          </span>
         </Link>
 
         <nav className="flex items-center gap-6 text-sm font-medium">

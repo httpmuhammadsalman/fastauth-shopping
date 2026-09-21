@@ -2,13 +2,36 @@
 
 import { useEffect, useState } from "react";
 
+export type PaymentResult = {
+  message: string;
+  invoiceNo?: string;
+  trxId?: string;
+  amount?: number;
+};
+
 type Props = {
   checkoutUrl: string;
   cartId: string;
   onClose: () => void;
+  onSuccess: (result: PaymentResult) => void;
 };
 
-export default function CheckoutModal({ checkoutUrl, cartId, onClose }: Props) {
+// Checkout posts { status, message, data } where data is a JSON string
+const parsePaymentResult = (event: { message?: string; data?: unknown }): PaymentResult => {
+  let data: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+  try {
+    data = typeof event.data === "string" ? JSON.parse(event.data) : (event.data ?? {});
+  } catch {}
+
+  return {
+    message: event.message ?? "Payment completed successfully!",
+    invoiceNo: data?.order?.invoiceNo,
+    trxId: data?.transaction?.trxid,
+    amount: data?.transaction?.totalAmount,
+  };
+};
+
+export default function CheckoutModal({ checkoutUrl, cartId, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,11 +41,13 @@ export default function CheckoutModal({ checkoutUrl, cartId, onClose }: Props) {
       if (e.key === "Escape") onClose();
     };
 
-    // Log events posted by the FastAuth checkout iframe
+    // Events posted by the FastAuth checkout iframe
     const checkoutOrigin = new URL(checkoutUrl).origin;
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== checkoutOrigin) return;
       console.log("[FastAuth checkout]", e.data);
+
+      if (e.data?.status === "success") onSuccess(parsePaymentResult(e.data));
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -32,7 +57,7 @@ export default function CheckoutModal({ checkoutUrl, cartId, onClose }: Props) {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("message", onMessage);
     };
-  }, [checkoutUrl, onClose]);
+  }, [checkoutUrl, onClose, onSuccess]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-6">

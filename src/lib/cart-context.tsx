@@ -15,14 +15,19 @@ type CartContextValue = {
   setQty: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
   clear: () => void;
+  // FastAuth cart created for this session, reused for updates until it is paid
+  remoteCartId: string | null;
+  setRemoteCartId: (cartId: string | null) => void;
 };
 
 const STORAGE_KEY = "fastauth-shopping-cart";
+const REMOTE_CART_KEY = "fastauth-shopping-remote-cart";
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
+  const [remoteCartId, setRemoteCartId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -30,6 +35,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setLines(JSON.parse(saved));
+      setRemoteCartId(localStorage.getItem(REMOTE_CART_KEY));
     } catch {}
     setLoaded(true);
   }, []);
@@ -38,8 +44,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!loaded) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+      if (remoteCartId) localStorage.setItem(REMOTE_CART_KEY, remoteCartId);
+      else localStorage.removeItem(REMOTE_CART_KEY);
     } catch {}
-  }, [lines, loaded]);
+  }, [lines, remoteCartId, loaded]);
 
   const value = useMemo<CartContextValue>(() => {
     const items = lines.flatMap((line) => {
@@ -63,8 +71,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ),
       removeItem: (id) => setLines((prev) => prev.filter((l) => l.id !== id)),
       clear: () => setLines([]),
+      remoteCartId,
+      setRemoteCartId,
     };
-  }, [lines]);
+  }, [lines, remoteCartId]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

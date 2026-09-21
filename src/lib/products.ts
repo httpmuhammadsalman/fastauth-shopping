@@ -8,6 +8,10 @@ export type Product = {
   category: string;
 };
 
+// Free-to-use photos from Unsplash (https://unsplash.com/license)
+const unsplash = (photoId: string) =>
+  `https://images.unsplash.com/${photoId}?w=600&h=600&fit=crop&auto=format&q=80`;
+
 export const products: Product[] = [
   {
     id: "p-headphones",
@@ -15,7 +19,7 @@ export const products: Product[] = [
     name: "Wireless Headphones",
     desc: "Over-ear, noise cancelling, 30h battery",
     price: 129.99,
-    image: "https://picsum.photos/seed/fa-headphones/600/600",
+    image: unsplash("photo-1505740420928-5e560c06d30e"),
     category: "Audio",
   },
   {
@@ -24,7 +28,7 @@ export const products: Product[] = [
     name: "Smart Watch",
     desc: "Heart rate, GPS and 7-day battery",
     price: 199.0,
-    image: "https://picsum.photos/seed/fa-watch/600/600",
+    image: unsplash("photo-1523275335684-37898b6baf30"),
     category: "Wearables",
   },
   {
@@ -33,7 +37,7 @@ export const products: Product[] = [
     name: "Travel Backpack",
     desc: "Water resistant, fits 16\" laptop",
     price: 74.5,
-    image: "https://picsum.photos/seed/fa-backpack/600/600",
+    image: unsplash("photo-1553062407-98eeb64c6a62"),
     category: "Bags",
   },
   {
@@ -42,34 +46,34 @@ export const products: Product[] = [
     name: "Bluetooth Speaker",
     desc: "Portable, waterproof, deep bass",
     price: 59.99,
-    image: "https://picsum.photos/seed/fa-speaker/600/600",
+    image: unsplash("photo-1608043152269-423dbba4e7e1"),
     category: "Audio",
   },
   {
     id: "p-keyboard",
     sku: "KBD-005",
-    name: "Mechanical Keyboard",
-    desc: "Hot-swappable switches, RGB backlight",
+    name: "Wireless Keyboard",
+    desc: "Slim aluminium body, full-size layout",
     price: 89.0,
-    image: "https://picsum.photos/seed/fa-keyboard/600/600",
+    image: unsplash("photo-1587829741301-dc798b83add3"),
     category: "Accessories",
   },
   {
     id: "p-mouse",
     sku: "MSE-006",
-    name: "Ergonomic Mouse",
-    desc: "Vertical grip, silent clicks",
+    name: "Wireless Mouse",
+    desc: "Compact design, silent clicks",
     price: 34.99,
-    image: "https://picsum.photos/seed/fa-mouse/600/600",
+    image: unsplash("photo-1527864550417-7fd91fc51a46"),
     category: "Accessories",
   },
   {
     id: "p-lamp",
     sku: "LMP-007",
     name: "Desk Lamp",
-    desc: "Dimmable LED with wireless charger",
+    desc: "Adjustable head, matte grey finish",
     price: 45.0,
-    image: "https://picsum.photos/seed/fa-lamp/600/600",
+    image: unsplash("photo-1507473885765-e6ed057f782c"),
     category: "Home",
   },
   {
@@ -78,7 +82,7 @@ export const products: Product[] = [
     name: "Insulated Bottle",
     desc: "Keeps drinks cold for 24 hours",
     price: 24.99,
-    image: "https://picsum.photos/seed/fa-bottle/600/600",
+    image: unsplash("photo-1602143407151-7111542de6e8"),
     category: "Home",
   },
 ];

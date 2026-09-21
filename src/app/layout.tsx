@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
+import { site } from "@/config/site";
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import "./globals.css";
 
@@ -15,8 +17,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FastAuth Shop",
-  description: "Demo shopping cart with FastAuth checkout",
+  title: {
+    default: `${site.name} Shop`,
+    template: `%s | ${site.name} Shop`,
+  },
+  description: `Demo storefront with ${site.name} checkout. ${site.tagline}.`,
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -25,13 +34,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/* Browser extensions (e.g. ColorZilla) inject attributes into <body> before hydration */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <CartProvider>
           <Header />
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-          <footer className="border-t border-zinc-200 py-6 text-center text-sm text-zinc-500">
-            FastAuth Shop &middot; test storefront
-          </footer>
+          <Footer />
         </CartProvider>
       </body>
     </html>
