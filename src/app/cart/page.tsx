@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import CheckoutModal, { type PaymentResult } from "@/components/CheckoutModal";
+import { requestCart } from "@/lib/cart-api";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
 
@@ -45,28 +46,20 @@ export default function CartPage() {
     setSubmitting(true);
     setError(null);
 
-    const send = (url: string) =>
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: lines }),
-      });
-
     try {
       // Update the existing FastAuth cart, create one if there is none (or it no longer exists)
-      let res = remoteCartId ? await send(`/api/cart/${remoteCartId}`) : await send("/api/cart");
+      let result = await requestCart(remoteCartId ? `/api/cart/${remoteCartId}` : "/api/cart", lines);
       // FastAuth answers 400 (not 404) for an unknown cart
-      if (remoteCartId && [400, 404].includes(res.status)) res = await send("/api/cart");
-      const json = await res.json();
+      if (remoteCartId && [400, 404].includes(result.status)) result = await requestCart("/api/cart", lines);
 
-      if (!res.ok || !json.success) {
-        setError(json.message ?? "Something went wrong");
+      if (!result.success || !result.cartId || !result.checkoutUrl) {
+        setError(result.message ?? "Something went wrong");
         return;
       }
 
-      const nextCheckout = { cartId: json.cartId, checkoutUrl: json.checkoutUrl };
+      const nextCheckout = { cartId: result.cartId, checkoutUrl: result.checkoutUrl };
       lastSynced.current = { signature, checkout: nextCheckout };
-      setRemoteCartId(json.cartId);
+      setRemoteCartId(result.cartId);
       setCheckout(nextCheckout);
     } catch {
       setError("Network error, please try again");

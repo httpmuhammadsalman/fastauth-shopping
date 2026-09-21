@@ -29,6 +29,11 @@ export default function Footer() {
                 Cart
               </Link>
             </li>
+            <li>
+              <Link href="/docs" className={linkClass}>
+                Developer Docs
+              </Link>
+            </li>
           </ul>
         </div>
 

@@ -18,9 +18,12 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="text-zinc-600 hover:text-zinc-900">
+        <nav className="flex items-center gap-4 text-sm font-medium sm:gap-6">
+          <Link href="/" className="hidden text-zinc-600 hover:text-zinc-900 sm:block">
             Products
+          </Link>
+          <Link href="/docs" className="text-zinc-600 hover:text-zinc-900">
+            Docs
           </Link>
           <Link
             href="/cart"
